@@ -106,11 +106,6 @@ Yes, provided the organisers can access what you used and your technical documen
 External data must be about **other games**. Any human-produced data about the provided game —
 event data, corrected tracking, annotations, from any source — is not allowed.
 
-However, as the Terms and Conditions state, participants shall not upload, disclose or otherwise
-make available to any third-party hosted or cloud-based LLM any videos, datasets, confidential
-information or other restricted materials provided in connection with the Competition, or any
-extracts thereof.
-
 ### Can I hand-label some frames?
 
 Not on the provided game, in any amount and for any purpose. The labels you submit must come out of

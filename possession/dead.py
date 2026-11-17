@@ -69,9 +69,13 @@ def dead_llr(ball, players, pitch):
     return llr + np.where(out, OUT_LLR, 0.0)
 
 
-def dead_mask(ball, players, pitch, runs, cost=SWITCH_COST):
-    """Boolean per frame, True = dead ball. Decoded separately inside each graded stretch."""
-    llr = dead_llr(ball, players, pitch) / FPS
+def dead_mask(ball, players, pitch, runs, cost=SWITCH_COST, extra_llr=None):
+    """Boolean per frame, True = dead ball. Decoded separately inside each graded stretch.
+    extra_llr: optional per-frame dead evidence from elsewhere (tagging.py), same units."""
+    llr = dead_llr(ball, players, pitch)
+    if extra_llr is not None:
+        llr = llr + extra_llr
+    llr = llr / FPS
     dead = np.zeros(len(ball), dtype=bool)
     for lo, hi in runs:
         dead[lo:hi] = decode(-llr[lo:hi], cost) == 1     # decode(): state 1 wins on negative input

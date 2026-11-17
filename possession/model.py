@@ -61,9 +61,13 @@ def decode(e, cost=SWITCH_COST):
     return out
 
 
-def label(ball, players, team, dead, runs, reach=REACH_M, scale=SCALE_M, cost=SWITCH_COST):
-    """H/A/D per frame inside `runs` (list of [lo, hi) graded stretches), X outside."""
+def label(ball, players, team, dead, runs, reach=REACH_M, scale=SCALE_M, cost=SWITCH_COST,
+          prior=None):
+    """H/A/D per frame inside `runs` (list of [lo, hi) graded stretches), X outside.
+    prior: optional per-frame team evidence from elsewhere (tagging.py), positive = home."""
     e = evidence(ball, players, team, reach, scale)
+    if prior is not None:
+        e = np.clip(e + prior, -1.0, 1.0)
     out = np.full(len(ball), "X", dtype="<U1")
     for lo, hi in runs:
         out[lo:hi] = "D"

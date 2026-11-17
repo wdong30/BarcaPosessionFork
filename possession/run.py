@@ -4,8 +4,10 @@
     python evaluation/validate_submission.py evaluation/results/<team_name>.csv
     python evaluation/run_evaluation.py
 
-Reads the tactical ATD (metadata XML + raw text) and, if present, the Smart Tagging XML, which is
-used for one thing only: the 'Kick Off (Start)' tags say where each half's play begins.
+Reads the tactical ATD (metadata XML + raw text) and, if present, the Smart Tagging XML. The
+'Kick Off (Start)' tags say where each half's play begins; the other set pieces and the goals are
+extra dead-ball and restart-team evidence (tagging.py). --no-tag-evidence turns the latter off,
+for an A/B against the public ground truth.
 Deterministic: no randomness, no model files, numpy only.
 The ATD parsing follows starter/baseline.py from the organisers' repository (MIT licence).
 """
@@ -20,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 from pipeline import possession  # noqa: E402
+import tagging  # noqa: E402
 
 
 def read_teams(meta_path):
@@ -78,6 +81,12 @@ if __name__ == "__main__":
     ap.add_argument("--frames", type=int); ap.add_argument("--fps", type=int, default=25)
     ap.add_argument("--pitch", type=float, nargs=2)
     ap.add_argument("--runs", type=int, nargs="+", help="lo hi lo hi ... (half-open)")
+    ap.add_argument("--no-tag-evidence", action="store_true",
+                    help="use the tagging for the kick-offs only, as before")
+    ap.add_argument("--phase-weight", type=float, default=tagging.PHASE_TEAM,
+                    help="team prior from phase tags (default off; see check_tags.py)")
+    ap.add_argument("--sp-dead", type=float, default=tagging.SP_DEAD_LLR,
+                    help="dead evidence before each tagged restart (default %(default)s)")
     a = ap.parse_args()
 
     if not (a.meta and a.raw and a.frames and a.pitch and a.runs):
@@ -97,8 +106,15 @@ if __name__ == "__main__":
     print("ball seen on {:.1%} of frames".format(np.mean(~np.isnan(ball[:, 0]))))
     kickoffs = read_kickoffs(a.tagging, runs, a.fps) if a.tagging else None
     print("graded stretches {}  kick-offs {}".format(runs, kickoffs))
+    tags = None
+    if a.tagging and not a.no_tag_evidence:
+        tagging.PHASE_TEAM, tagging.SP_DEAD_LLR = a.phase_weight, a.sp_dead
+        tags = tagging.read(a.tagging, a.fps)
+        print("tag evidence: {} restarts, {} goals, phase weight {}, sp-dead {}".format(
+            len(tagging.restarts(tags)), sum(t["code"] == "goals" for t in tags), a.phase_weight,
+            a.sp_dead))
 
-    labels = possession(ball, players, team, tuple(a.pitch), runs, kickoffs)
+    labels = possession(ball, players, team, tuple(a.pitch), runs, kickoffs, tags)
     folder = os.path.dirname(a.out)
     if folder and not os.path.isdir(folder):
         os.makedirs(folder)

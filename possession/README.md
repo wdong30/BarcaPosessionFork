@@ -15,10 +15,40 @@ Nothing here has been run on the competition match yet.
    deflection does not flip possession, drop-outs carry the last team, and the change is placed
    where the new team's control starts.
 3. Frames of a half before its Smart Tagging `Kick Off (Start)` tag are dead (`run.py`).
+4. **Smart Tagging as evidence** (`tagging.py`), on by default, `--no-tag-evidence` turns it off.
+   Each tagged set piece adds weak dead evidence from the tag start up to the restart (the first
+   fast ball inside the window), live evidence for 3 s after it, and team evidence for the tagged
+   team for 3 s after it. Frames between a `GOALS` tag and the next `Kick Off (After Goal)` get
+   dead evidence. The tracking can still overrule any tag. Two parts are there but off by default:
+   the throw-in team inferred from who had the ball before it went out (it hurt on the dev set), and
+   a team prior from phase tags (`--phase-weight`). The phase tags' meaning per code is a guess, so
+   check it with `check_tags.py` first.
+
+### Smart Tagging on the dev set
+
+`python3 dev_tags.py <sample-data folder> 2 5` simulates a tag file from the sample games'
+set pieces (recall per type, false tags, throw-ins as N/A, a 4-7 s window around each restart; all
+assumptions) and compares. Weights were picked on game 1; spellF1 / macroF1 on held-out game 2,
+5 seeds:
+
+| stoppages with ball hidden | no tags | with tags |
+|---|---|---|
+| 30% | 0.476 / 0.850 | 0.481 / 0.855 |
+| 60% | 0.450 / 0.831 | 0.457 / 0.840 |
+| 90% | 0.427 / 0.809 | 0.438 / 0.821 |
+
+The dead-ball weight is the uncertain one: game 1 is best at 0.75, game 2 keeps improving up to 4
+(+0.02-0.03). Try a few values of `--sp-dead` against the public ground truth:
+
+    for w in 0.75 1.5 3; do python possession/run.py --sp-dead $w --out evaluation/results/sp$w.csv; done
+    python possession/run.py --no-tag-evidence --out evaluation/results/notags.csv
+    python evaluation/run_evaluation.py
+
+The public window is 5 minutes, so a difference of a few hundredths there may be noise.
 
 ## Run on the competition data
 
-Copy this folder into the hackathon repository as `possession/`, then from the repository root:
+From the repository root:
 
     python possession/run.py --out evaluation/results/<team_name>.csv
     python evaluation/validate_submission.py evaluation/results/<team_name>.csv

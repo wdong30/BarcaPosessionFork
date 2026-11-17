@@ -151,10 +151,6 @@ The starter framework, the scorer, the public ground truth and four reference ba
 Participants may use LLMs anywhere in their pipeline — commercial (ChatGPT, Claude, Gemini) or
 open-source, hosted or local. There is no restriction on model choice.
 
-However, participants shall not upload, disclose or otherwise make available to any third-party hosted 
-or cloud-based LLM any videos, datasets, confidential information or other restricted materials 
-provided in connection with the Competition, or any extracts thereof
-
 Note the difference from 2026: the use of LLMs is **not itself an evaluation criterion** this year.
 Nothing is scored except the possession file. An LLM is worth using if it makes the answer better.
 
